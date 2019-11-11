@@ -7,7 +7,11 @@
   <body>
 
     <h3 style='color: #ccc;font-size: 30px;'>No message yet..</h3>
-    <div class="message_holder"></div>
+    <div class="message_holder">
+    {% for message in messages %}
+        {{message.message}}<br />
+    {% endfor %}
+    </div>
 
     <form action="" method="POST">
       <input type="text" class="username" placeholder="User Name"/>
