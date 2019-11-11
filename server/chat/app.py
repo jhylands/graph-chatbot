@@ -22,13 +22,22 @@ class Message(db.Model):
     id = db.Column("id", db.Integer, autoincrement=True, primary_key=True)
     message = db.Column("message", db.Text)
 
+def handle_message(message):
+    if type(message) == type({}) and "message" in message:
+        message = Message(message = message["message"])
+        db.session.add(message)
+        db.session.commit()
+        
+
 @app.route('/')
 def sessions():
     messages = Message.query.all()
     return render_template('session.html', messages=messages)
 
-@app.route('/home')
+@app.route('/send', methods=['POST'])
 def con_test():
+    content = request.json
+    handle_message(content)
     return jsonify({'resp':True})
 
 def messageReceived(methods=['GET', 'POST']):
@@ -36,9 +45,7 @@ def messageReceived(methods=['GET', 'POST']):
 
 @socketio.on('my event')
 def handle_my_custom_event(json, methods=['GET', 'POST']):
-    message = Message(message = str(json))
-    db.session.add(message)
-    db.session.commit()
+    handle_message(json)
     print('received my event: ' + str(json))
     socketio.emit('my response', json, callback=messageReceived)
 
