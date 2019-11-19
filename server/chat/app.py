@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
+from responder import respond
 from time import sleep
 '''
 Main app
@@ -29,14 +30,9 @@ def handle_message(message):
         message = Message(message = message["message"])
         db.session.add(message)
         db.session.commit()
-        socketio.sleep(10)
-        json = {}
-        json['user_name'] = "jhylands"
-        json['message'] = "Delayed response 1"
+        json = respond(message["message"])
         socketio.emit('my response', json, callback=messageReceived)
-#       sleep(5)
-#        json['message'] = "Delayed response 5"
-#        socketio.emit('my response', json, callback=messageReceived)
+        
     else:
         print ("something went wrong")
         
