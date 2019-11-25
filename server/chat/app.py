@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
-from responder import respond
+from responder.main import respond
 from time import sleep
 '''
 Main app
@@ -19,6 +19,8 @@ app.config['SQLALCHEMY_POOL_RECYCLE']=1
 socketio = SocketIO(app)
 db = SQLAlchemy()
 db.init_app(app)
+class Chat:
+    context = 1
 
 class Message(db.Model):
     __tablename__ = "message"
@@ -30,7 +32,7 @@ def handle_message(message):
         message = Message(message = message["message"])
         db.session.add(message)
         db.session.commit()
-        json = respond(message["message"])
+        json = respond(Chat(), message["message"])
         socketio.emit('my response', json, callback=messageReceived)
         
     else:
