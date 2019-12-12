@@ -2,8 +2,18 @@
 import re
 
 class Node:
-    def __init__(self, name=""):
+    outgoing = []
+    incoming = []
+
+    def __init__(self, name="", data=None):
         self.name = name
+        self.data = data
+
+    def outgoing(self):
+        return self.outgoing
+
+    def incoming(self):
+        return self.incoming
 
     def __repr__(self):
         return self.name
@@ -14,26 +24,25 @@ class Edge:
     end = None
     def __init__(self, start, style, end):
         self.start = start
+        start.outgoing.append(self)
         self.style = style
         self.end = end
+        end.incoming.append(self)
 
 def anything(context, response):
-    if response=="add handle":
-        context = "ADD"
-        return context, "Please enter the pattern to match:"
-    else:
-        return context , "You said %s"%response
+    return context , "You said %s"%response
         
 def add(context, response):
     return "ANYTHING", "Given the command what should I respond?"
-    
-handlers = {"ANYTHING": anything, "ADD": add}
-def handle(context, response):
-    
-    return handlers[context](context, response)
 
 def init_context():
     root = Node("root_node")
+    primative = Node("Primitive edge")
+    add_rule = Node("add rule", "add rule")
+    to_head = Edge(root, primative, add_rule)
+    check_next = Node("check next")
+    anything = Node("anything", ".*")
+    check_next_link = Edge(add_rule, check_next, anything)
     return root
 
 # I guess this will eventually take context as well
@@ -42,12 +51,14 @@ def match_response(response_map, response):
     if len(matches)>1:
         print("More than one regex matched!")
     else:
-        return matches[0]
+        #Currently assuming left priority
+        pass
+    return matches[0]
 
 def main():
     statement = "Welcome to LIRA"
     context = init_context()
-    response_map = [(".*", anything)]
+    response_map = [("add rule", add), (".*", anything)]
     while True:
         print(statement)
         response = input()
