@@ -41,6 +41,20 @@ def add(context, response):
     context.insert(0, (response, new_command))
     return context, "%s, added!"%response
 
+def add_formatter(context, response):
+    print("Please enter the regex to check against:")
+    regex = input()
+    print("Given the command what should I respond?")
+    new_response = input()
+    def new_command(context, response):
+        m = re.match(regex, response)
+        if m:
+            return context, new_response.format(*m.groups())
+        else:
+            return context, "REGEX ERROR"
+    context.insert(0, (regex, new_command))
+    return context, "%s, added!"%response
+
 def init_context():
     root = Node("root_node")
 #    primative = Node("Primitive edge")
@@ -64,7 +78,7 @@ def match_response(response_map, response):
 def main():
     statement = "Welcome to LIRA"
     context = init_context()
-    response_map = [("add rule", add), (".*", anything)]
+    response_map = [("add formatter", add_formatter), ("add rule", add), (".*", anything)]
     context = response_map
     while True:
         print(statement)
