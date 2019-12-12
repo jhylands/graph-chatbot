@@ -2,10 +2,9 @@
 import re
 
 class Node:
-    outgoing = []
-    incoming = []
-
     def __init__(self, name="", data=None):
+        self.outgoing = []
+        self.incoming = []
         self.name = name
         self.data = data
 
@@ -19,15 +18,15 @@ class Node:
         return self.name
 
 class Edge:
-    start = None
-    style = None
-    end = None
     def __init__(self, start, style, end):
         self.start = start
         start.outgoing.append(self)
         self.style = style
         self.end = end
         end.incoming.append(self)
+
+    def __repr__(self):
+        return "({})-[{}]->({})".format(self.start.name , self.style.name, self.end.name)
 
 def anything(context, response):
     return context , "You said %s"%response
@@ -55,14 +54,29 @@ def add_formatter(context, response):
     context.insert(0, (regex, new_command))
     return context, "%s, added!"%response
 
+def graph_explore(context, response):
+    root = context[-1][-1]
+    print("Welcome to graph explore!")
+    curr_node = root
+    while response!="exit":
+        print("-- %s --"%curr_node)
+        if curr_node.outgoing:
+            print("# Outgoing")
+            print(" - ", "\n - ".join([str(n) for n in curr_node.outgoing]))
+        if curr_node.incoming:
+            print("# Incoming")
+            print(" - ", "\n - ".join([str(n) for n in curr_node.incoming]))
+        response = input()
+    return context, "bye"
+
 def init_context():
     root = Node("root_node")
-#    primative = Node("Primitive edge")
-#    add_rule = Node("add rule", "add rule")
-#    to_head = Edge(root, primative, add_rule)
-#    check_next = Node("check next")
-#    anything = Node("anything", ".*")
-#    check_next_link = Edge(add_rule, check_next, anything)
+    primative = Node("Primitive edge")
+    add_rule = Node("add rule", "add rule")
+    to_head = Edge(root, primative, add_rule)
+    check_next = Node("check next")
+    anything = Node("anything", ".*")
+    check_next_link = Edge(add_rule, check_next, anything)
     return root
 
 # I guess this will eventually take context as well
@@ -78,7 +92,7 @@ def match_response(response_map, response):
 def main():
     statement = "Welcome to LIRA"
     context = init_context()
-    response_map = [("add formatter", add_formatter), ("add rule", add), (".*", anything)]
+    response_map = [("graph explore", graph_explore), ("add formatter", add_formatter), ("add rule", add), (".*", anything), ('', context)]
     context = response_map
     while True:
         print(statement)
