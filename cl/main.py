@@ -33,16 +33,22 @@ def anything(context, response):
     return context , "You said %s"%response
         
 def add(context, response):
-    return "ANYTHING", "Given the command what should I respond?"
+    print("Please enter the regex to check against:")
+    response = input()
+    print("Given the command what should I respond?")
+    new_response = input()
+    new_command = lambda context, response: (context, new_response)
+    context.insert(0, (response, new_command))
+    return context, "%s, added!"%response
 
 def init_context():
     root = Node("root_node")
-    primative = Node("Primitive edge")
-    add_rule = Node("add rule", "add rule")
-    to_head = Edge(root, primative, add_rule)
-    check_next = Node("check next")
-    anything = Node("anything", ".*")
-    check_next_link = Edge(add_rule, check_next, anything)
+#    primative = Node("Primitive edge")
+#    add_rule = Node("add rule", "add rule")
+#    to_head = Edge(root, primative, add_rule)
+#    check_next = Node("check next")
+#    anything = Node("anything", ".*")
+#    check_next_link = Edge(add_rule, check_next, anything)
     return root
 
 # I guess this will eventually take context as well
@@ -59,9 +65,10 @@ def main():
     statement = "Welcome to LIRA"
     context = init_context()
     response_map = [("add rule", add), (".*", anything)]
+    context = response_map
     while True:
         print(statement)
         response = input()
-        context, statement = match_response(response_map, response)(context, response)
+        context, statement = match_response(context, response)(response_map, response)
 
 main()
