@@ -1,12 +1,31 @@
 # Starting off just trying to build a simple repl
 import re
 
+class NoIndexLinkError(Exception):
+    def __init__(self, message):
+        super(NoIndexLinkError).__init__(message)
+
 class Node:
-    def __init__(self, name="", data=None):
+    def __init__(self, node_list, name="", data=None):
         self.outgoing = []
         self.incoming = []
+        self.edges = []
         self.name = name
         self.data = data
+        self.add_global_link(node_list)
+
+    def add_global_link(self, node_list):
+        self.global_ref = node_list
+        try:
+            self.index = node_list.index(self)
+        except ValueError:
+            node_list.append(self)
+            self.index = node_list.index(self)
+
+    def get_index(self):
+        if self.global_ref:
+            return self.index
+        raise NoIndexLinkError(self.name)
 
     def outgoing(self):
         return self.outgoing
@@ -15,18 +34,19 @@ class Node:
         return self.incoming
 
     def __repr__(self):
-        return self.name
+        return "{}:{}".format(self.get_index(), self.name)
 
 class Edge:
     def __init__(self, start, style, end):
         self.start = start
         start.outgoing.append(self)
         self.style = style
+        style.edges.append(self)
         self.end = end
         end.incoming.append(self)
 
     def __repr__(self):
-        return "({})-[{}]->({})".format(self.start.name , self.style.name, self.end.name)
+        return "({})-[{}]->({})".format(self.start , self.style, self.end)
 
 def anything(context, response):
     return context , "You said %s"%response
@@ -58,24 +78,60 @@ def graph_explore(context, response):
     root = context[-1][-1]
     print("Welcome to graph explore!")
     curr_node = root
+    node_list = curr_node.global_ref
+    commands = {
+        "(\d+)": "goto",
+        "add node (\w+)": "add node with name",
+        "add edge\s?\((\d+)\)-[(d+)]->\((\d+)\)": "add edge, (node1)-[edge]->(node2)"
+    }
     while response!="exit":
+        print(node_list)
+        print("Instructions")
+        for key, value in commands.items():
+            print(key, ":", value)
         print("-- %s --"%curr_node)
         if curr_node.outgoing:
             print("# Outgoing")
-            print(" - ", "\n - ".join([str(n) for n in curr_node.outgoing]))
+            print(" - ", "\n - ".join(map(str, curr_node.outgoing)))
         if curr_node.incoming:
             print("# Incoming")
-            print(" - ", "\n - ".join([str(n) for n in curr_node.incoming]))
+            print(" - ", "\n - ".join(map(str, curr_node.incoming)))
         response = input()
+#        for key, function in commands.items():
+#        match = re.match(key, response)
+        match = re.match("edges", response)
+        if match:
+            print("# Edges")
+            print(" - ", "\n - ".join(map(str, curr_node.edges)))
+            
+        match = re.match("(\d+)", response)
+        if match:
+            curr_node = node_list[int(match.group(1))]
+        match = re.match("add node (\w+)", response)
+        if match:
+            #Now we are in an adding node state.
+            name = match.group(1)
+            curr_node = Node(node_list, name)
+            print("Node: {} added with id {}".format(name, curr_node.get_index()))
+#        match = re.match("add edge\s?\((\d+)\)-[(d+)]->\((\d+)\)", response)
+        match = re.match("add edge (\d+) (\d+) (\d+)", response)
+        if match:
+            # Simply declaring the edge should add it to the node lists
+            # So it doesn't need to be added to another list like the node
+            # had to be.
+            print("adding edge")
+            Edge(node_list[int(match.group(1))], node_list[int(match.group(2))], node_list[int(match.group(3))])
+            
     return context, "bye"
 
 def init_context():
-    root = Node("root_node")
-    primative = Node("Primitive edge")
-    add_rule = Node("add rule", "add rule")
+    node_list = []
+    root = Node(node_list, "root_node")
+    primative = Node(node_list, "Primitive edge")
+    add_rule = Node(node_list, "add rule", "add rule")
     to_head = Edge(root, primative, add_rule)
-    check_next = Node("check next")
-    anything = Node("anything", ".*")
+    check_next = Node(node_list, "check next")
+    anything = Node(node_list, "anything", ".*")
     check_next_link = Edge(add_rule, check_next, anything)
     return root
 
