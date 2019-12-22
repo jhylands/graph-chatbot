@@ -1,5 +1,6 @@
 # Starting off just trying to build a simple repl
 import re
+import pickle
 
 class NoIndexLinkError(Exception):
     def __init__(self, message):
@@ -47,6 +48,24 @@ class Edge:
 
     def __repr__(self):
         return "({})-[{}]->({})".format(self.start , self.style, self.end)
+
+def save(context, more):
+    root = context[-1][-1]
+    print("Saving")
+    curr_node = root
+    node_list = curr_node.global_ref
+    with open("database.pkl", "wb") as f:
+        pickle.dump(node_list, f)
+    return context, "saved"
+
+def load(context, more):
+    with open("database.pkl", "rb") as f:
+        save_file = pickle.load(f)
+    print("Loading")
+    context[-1] = ('', save_file[0])
+    return context, "loaded {} items".format(len(save_file))
+    
+        
 
 def anything(context, response):
     return context , "You said %s"%response
@@ -148,11 +167,12 @@ def match_response(response_map, response):
 def main():
     statement = "Welcome to LIRA"
     context = init_context()
-    response_map = [("graph explore", graph_explore), ("add formatter", add_formatter), ("add rule", add), (".*", anything), ('', context)]
+    response_map = [("save", save), ("load", load), ("graph explore", graph_explore), ("add formatter", add_formatter), ("add rule", add), (".*", anything), ('', context)]
     context = response_map
     while True:
         print(statement)
         response = input()
         context, statement = match_response(context, response)(response_map, response)
 
-main()
+if __name__=="__main__":
+    main()
