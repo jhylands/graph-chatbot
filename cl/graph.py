@@ -42,5 +42,13 @@ class Edge:
         self.end = end
         end.incoming.append(self)
 
+    def remove(self):
+        # remove self from start
+        self.start.outgoing.remove(self)
+        # remove self from style
+        self.style.edges.remove(self)
+        # remove self from end
+        self.end.incoming.remove(self)
+
     def __repr__(self):
         return "({})-[{}]->({})".format(self.start , self.style, self.end)

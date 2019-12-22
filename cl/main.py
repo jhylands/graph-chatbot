@@ -95,7 +95,13 @@ def graph_explore(context, response):
             # had to be.
             print("adding edge")
             Edge(node_list[int(match.group(1))], node_list[int(match.group(2))], node_list[int(match.group(3))])
-            
+        match = re.match("rm edge (\d+) (\d+) (\d+)", response)
+        if match:
+            outgoing_list = node_list[int(match.group(1))].outgoing
+            for edge in outgoing_list:
+                if edge.end.get_index()==int(match.group(3)) and edge.style.get_index()==int(match.group(2)):
+                    edge.remove()
+                    break
     return context, "bye"
 
 def init_context():
